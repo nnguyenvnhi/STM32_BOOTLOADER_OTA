@@ -1,0 +1,9 @@
+etx_ota_update.c:54:13:etx_ota_download_and_flash	16	static
+etx_ota_update.c:109:20:etx_process_data	128	static
+etx_ota_update.c:307:17:etx_receive_chunk	40	static
+etx_ota_update.c:419:13:etx_ota_send_resp	32	static
+etx_ota_update.c:444:26:write_data_to_slot	56	static
+etx_ota_update.c:542:16:get_available_slot_number	80	static
+etx_ota_update.c:578:26:write_data_to_flash_app	48	static
+etx_ota_update.c:651:6:load_new_app	96	static
+etx_ota_update.c:755:26:write_cfg_to_flash	56	static
