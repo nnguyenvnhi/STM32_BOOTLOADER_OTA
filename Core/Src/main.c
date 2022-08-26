@@ -70,7 +70,6 @@ uint8_t Command;
 uint32_t Crc;
 uint8_t Eof;
 
-uint8_t buf[1024];
 uint8_t rx_buf[3] = {0,};
 uint8_t count = 0;
 uint8_t flag  = 0;
@@ -79,7 +78,7 @@ static uint8_t status = 0;
 uint8_t rx_header[15] = {0,};
 
 uint32_t crc = 0;
-uint8_t bufff[HEADER_FRAME_LENGHT];
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if(huart->Instance == huart6.Instance){
 			if(!strncmp("OTA",(char*)rx_buf, 3)){
@@ -103,6 +102,7 @@ uint8_t buf2[4];
 uint8_t buf3[4];
 uint8_t cx;
 int datalen;
+uint8_t bufff[19];
 /* USER CODE END 0 */
 
 /**
@@ -150,12 +150,12 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  if(flag == 1){
-//		  Frame_STM32OTA();
+		  Frame_STM32OTA();
+//		  Frame_SendResponseFrame(RESPONSE_ACK);
+//		  HAL_UART_Receive(&huart6, bufff, DATA_FRAME_LENGHT, 1000);
+//		  Frame_ReadDataFrame(bufff);
+
 		  flag = 0;
-		  HAL_UART_Receive(&huart6, buf1, 4, 1000);
-		  HAL_UART_Receive(&huart6, rx_header, 15, 1000);
-//		  HAL_UART_Receive(&huart6, rx_header + 4, 10, 1000);
-//		  HAL_UART_Receive(&huart6, rx_header + 14, 5, 1000);
 		  HAL_UART_Receive_IT(&huart6, rx_buf, 3);
 	  }
 

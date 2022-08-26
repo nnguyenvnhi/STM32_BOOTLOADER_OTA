@@ -79,31 +79,31 @@ defReturnType Frame_ReadHeaderFrame(){
 
 defReturnType Frame_ReadDataFrame(uint8_t* data){
 	uint32To4Bytes crc_merge;
+	uint8_t buf[4];
 
-	HAL_UART_Transmit(&MY_UART, data, DATA_FRAME_LENGHT, 3000);
+	HAL_UART_Receive(&MY_UART, buf, 4, 1000);
+	Frame_DataLenghtPerFrame = buf[2]*256 + buf[3];
 
-	Frame_DataLenghtPerFrame = data[2]*256 + data[3];
+	HAL_UART_Receive(&MY_UART, data, Frame_DataLenghtPerFrame + 5, 3000);
 
-	if(!((data[0] == SOF_SIGNAL)&&(data[Frame_DataLenghtPerFrame - 1] == EOF_SIGNAL))) return HANDLE_FAILED;
+	if(!((buf[0] == SOF_SIGNAL)&&(data[Frame_DataLenghtPerFrame + 5 - 1] == EOF_SIGNAL))) return HANDLE_FAILED;
 
-	if(data[1] != DATA_TYPE) return HANDLE_FAILED;
+	if(buf[1] != DATA_TYPE) return HANDLE_FAILED;
 
-	crc_merge.DataArray[0] = data[Frame_DataLenghtPerFrame - 2];
-	crc_merge.DataArray[1] = data[Frame_DataLenghtPerFrame - 3];
-	crc_merge.DataArray[2] = data[Frame_DataLenghtPerFrame - 4];
-	crc_merge.DataArray[3] = data[Frame_DataLenghtPerFrame - 5];
+	crc_merge.DataArray[0] = data[Frame_DataLenghtPerFrame + 5 - 2];
+	crc_merge.DataArray[1] = data[Frame_DataLenghtPerFrame + 5 - 3];
+	crc_merge.DataArray[2] = data[Frame_DataLenghtPerFrame + 5 - 4];
+	crc_merge.DataArray[3] = data[Frame_DataLenghtPerFrame + 5 - 5];
 
-	uint16_t data_len = data[3] + data[4]*256;
-	uint32_t crc_data = crc32((uint8_t*)(&data[0]+ 4), data_len);
+	uint32_t crc_data = crc32((uint8_t*)(&data[0]), Frame_DataLenghtPerFrame);
 
 	if(crc_data != crc_merge.DataUint32) return HANDLE_FAILED;
 
 	return HANDLE_OK;
 }
 
-
+extern uint8_t bufff[19];
 defReturnType Frame_STM32OTA(){
-	uint8_t buf[DATA_FRAME_LENGHT];
 	if(Frame_InitFlash(FLASH_SLOT_0) != HANDLE_OK) return HANDLE_FAILED;
 
 	Frame_SendResponseFrame(RESPONSE_ACK);
@@ -126,18 +126,18 @@ defReturnType Frame_STM32OTA(){
 		return HANDLE_FAILED;
 	}
 
-//	for(uint16_t NoFrame = 0; NoFrame < Frame_NumberOfKbyteData; NoFrame ++){
-//		if(Frame_ReadDataFrame(buf) == HANDLE_OK){
-////			Frame_WriteFlashToSlot(FLASH_SLOT_0,(uint8_t*) (&buf[0]+4), DATA_FRAME_LENGHTs);
-//			Frame_SendResponseFrame(RESPONSE_ACK);
-//		}
-//		else{
-//			Frame_SendResponseFrame(RESPONSE_NACK);
-//			Frame_ReadStopFrame();
-//			return HANDLE_FAILED;
-//		}
-//		memset(buf, 0, DATA_FRAME_LENGHT);
-//	}
+	for(uint16_t NoFrame = 0; NoFrame < Frame_NumberOfKbyteData; NoFrame ++){
+		uint8_t buf[DATA_FRAME_LENGHT];
+		if(Frame_ReadDataFrame(buf) == HANDLE_OK){
+//			Frame_WriteFlashToSlot(FLASH_SLOT_0,(uint8_t*) (&buf[0]+4), DATA_FRAME_LENGHTs);
+			Frame_SendResponseFrame(RESPONSE_ACK);
+		}
+		else{
+			Frame_SendResponseFrame(RESPONSE_NACK);
+			Frame_ReadStopFrame();
+			return HANDLE_FAILED;
+		}
+	}
 
 
 	HAL_FLASH_Lock();
